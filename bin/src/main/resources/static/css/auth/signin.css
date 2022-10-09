@@ -1,0 +1,94 @@
+#wrap {
+    width: 100%;
+}
+
+#top-header {
+    width: 100%;
+    height: 160px;
+    background-color: aqua
+}
+
+#main-contents {
+    width: 980px;
+    margin: 0 auto;
+
+}
+
+.main-header {
+    display: flex;
+    width: 100%;
+    margin-bottom: 50px;
+    padding-top: 25px;
+}
+
+.main-header .home {
+    cursor: pointer;
+}
+
+.main-header .home img {
+    width: 14px;
+    height: 15px;
+}
+
+.main-header .move-depth {
+    width: 100%;
+}
+
+.main-header .lo-depth {
+    width: 80px;
+    height: 18px;
+    padding-left: 15px;
+    font-size: 13px;
+}
+
+.main-header .now-depth {
+    font-size: 13px;
+}
+
+.main-header .lo-depth:before {
+    content: url(https://www.winiaaid.com/assets/images/common/arrow_location.png);
+    margin-right: 5px;
+}
+
+.main-login-box {
+    width: 100%;
+}
+
+.sub-title {
+    width: 100%;
+    height: 30px;
+    margin-bottom: 35px;
+}
+
+.sub-title h1 {
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.comment-login {
+    width: 100%;
+    text-align: center;
+    height: 67px;
+    margin-bottom: 60px;
+    line-height: 29px;
+}
+
+.comment-login-title {
+    width: 100%;
+    height: 29px;
+    font-size: 27px;
+    margin-bottom: 20px;
+}
+
+.comment-login-title span {
+    font-size: 27px;
+    color: rgb(10, 113, 204);
+    font-weight: 400;
+}
+
+#footer{
+    margin-top: 50px;
+    width: 100%;
+    height: 300px;
+    background-color: aqua;
+}

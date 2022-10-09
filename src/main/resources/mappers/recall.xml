@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.winiaaid.domain.recall.RecallRepository">
+	<resultMap id="recallServiceInfoMap" type="com.project.winiaaid.domain.requestInfo.ServiceInfo">
+		<association property="productInfoEntity" javaType="com.project.winiaaid.domain.recall.RecallProductInfoEntity">
+			<id property="service_code" column="service_code"/>
+			<result property="model_number" column="model_number"/>
+		</association>
+		<association property="userInfoEntity" javaType="com.project.winiaaid.domain.recall.RecallUserInfoEntity">
+			<result property="user_code" column="user_code"/>
+			<result property="user_name" column="user_name"/>
+			<result property="main_phone_number" column="main_phone_number"/>
+			<result property="sub_phone_number" column="sub_phone_number"/>
+			<result property="postal_code" column="postal_code"/>
+			<result property="main_address" column="main_address"/>
+			<result property="detail_address" column="detail_address"/>
+		</association>
+		<association property="reservationInfoEntity" javaType="com.project.winiaaid.domain.recall.RecallReservationInfoEntity">
+			<result property="service_type_name" column="service_type_name"/>
+			<result property="progress_status" column="progress_status"/>
+			<result property="request_date" column="request_date"/>
+			<result property="total_count" column="total_count"/>
+		</association>
+	</resultMap>
+
+	<insert id="addRecallRequest" parameterType="com.project.winiaaid.domain.requestInfo.ServiceInfo">
+		insert into
+			recall_service_table
+		values(
+			#{productInfoEntity.model_code},
+			#{productInfoEntity.id2},
+			#{productInfoEntity.service_code},
+			3,
+			#{productInfoEntity.model_code},
+			#{userInfoEntity.postal_code},
+			#{userInfoEntity.main_address},
+			#{userInfoEntity.detail_address},
+			now(),
+			1,
+			#{userInfoEntity.user_code},
+			<choose>
+				<when test="userInfoEntity.non_member_flag != true">
+					0
+				</when>
+				<otherwise>
+					1
+				</otherwise>
+			</choose>
+		);
+
+		<if test="userInfoEntity.non_member_flag == true">
+			insert into
+				non_member_service_table
+			values(
+				#{userInfoEntity.user_code},
+				#{userInfoEntity.user_name},
+				null,
+				#{userInfoEntity.main_phone_number},
+				#{userInfoEntity.sub_phone_number}
+			);
+		</if>
+	</insert>
+	
+	<select id="getRecallRequest" parameterType="HashMap" resultMap="recallServiceInfoMap">
+		select
+			rst.service_code,
+			rst.request_date,
+			rst.progress_status,
+			rst.user_code,
+
+			<choose>
+				<when test="non_member_flag == false">
+					um.user_name,
+					um.main_phone_number,
+					ud.sub_phone_number,
+				</when>
+				<otherwise>
+					nmst.user_name,
+					nmst.main_phone_number,
+					nmst.sub_phone_number,
+				</otherwise>
+			</choose>
+
+			rst.postal_code,
+			rst.main_address,
+			rst.detail_address,
+
+			stt.service_type_name,
+
+			pmd.model_number
+		from
+			recall_service_table rst
+			LEFT OUTER JOIN service_type_table stt on(stt.service_type_code = rst.service_type_code)
+			LEFT OUTER JOIN product_model_detail pmd on(pmd.model_code = rst.model_code)
+			<choose>
+				<when test="non_member_flag == false">
+					LEFT OUTER JOIN user_mst um on(um.user_code = rst.user_code)
+					LEFT OUTER JOIN user_dtl ud on(ud.user_code = um.user_code)
+				</when>
+				<otherwise>
+					LEFT OUTER JOIN non_member_service_table nmst on(nmst.user_code = rst.user_code)
+				</otherwise>
+			</choose>
+		where
+			service_code = #{service_code}
+			and
+			<choose>
+				<when test="non_member_flag == true">
+					non_member_flag = 1
+				</when>
+				<otherwise>
+					non_member_flag = 0
+					and rst.user_code = #{user_code}
+				</otherwise>
+			</choose>
+	</select>
+
+	<select id="getRecallRequestList" parameterType="hashmap" resultMap="recallServiceInfoMap">
+		select
+			rst.service_code,
+			rst.request_date,
+			rst.progress_status,
+			rst.user_code,
+
+			rst.postal_code,
+			rst.main_address,
+			rst.detail_address,
+
+			stt.service_type_name,
+
+			pmd.model_number,
+
+			um.user_name,
+			um.main_phone_number,
+			ud.sub_phone_number,
+			
+			(select
+				COUNT(*)
+			from
+				recall_service_table
+			where
+				user_code = #{user_code}) as total_count
+		from
+			recall_service_table rst
+			LEFT OUTER JOIN service_type_table stt on(stt.service_type_code = rst.service_type_code)
+			LEFT OUTER JOIN product_model_detail pmd on(pmd.model_code = rst.model_code)
+			LEFT OUTER JOIN user_mst um on(um.user_code = rst.user_code)
+			LEFT OUTER JOIN user_dtl ud on(ud.user_code = um.user_code)
+		where
+			user_code = #{user_code}
+		order by
+			progress_status desc,
+			request_date desc
+		limit #{index}, 10;
+	</select>
+	
+	<select id="findServiceCode" parameterType="HashMap" resultType="com.project.winiaaid.domain.recall.RecallServiceCode">
+		select
+			IFNULL(MAX(id2), 0) + 1 as id2,
+			RPAD(#{temp_service_code}, CHAR_LENGTH(#{temp_service_code}) + CHAR_LENGTH((IFNULL(MAX(id2), 1) + 1)) + 1, '0') + IFNULL(MAX(id2), 0) + 1 as service_code
+		from
+			recall_service_table
+		where
+			id1 = #{model_code};
+	</select>
+	
+	<update id="updateCancelRecallRequest" parameterType="String">
+		update
+			recall_service_table
+		set
+			progress_status = 0
+		where
+			service_code = #{service_code};
+	</update>
+</mapper>
